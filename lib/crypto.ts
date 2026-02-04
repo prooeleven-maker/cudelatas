@@ -3,9 +3,25 @@
  * NÃO usa Node.js crypto
  */
 
-export async function sha256(value: string): Promise<string> {
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+export function generateLicenseKey(): string {
+  const parts = []
+
+  for (let i = 0; i < 4; i++) {
+    let part = ''
+    for (let j = 0; j < 4; j++) {
+      part += ALPHABET[Math.floor(Math.random() * ALPHABET.length)]
+    }
+    parts.push(part)
+  }
+
+  return parts.join('-')
+}
+
+export async function hashLicenseKey(key: string): Promise<string> {
   const encoder = new TextEncoder()
-  const data = encoder.encode(value)
+  const data = encoder.encode(key)
 
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
@@ -16,7 +32,7 @@ export async function sha256(value: string): Promise<string> {
 }
 
 /**
- * Gera um token aleatório seguro (Edge)
+ * Token aleatório seguro (Edge)
  */
 export function randomToken(length = 32): string {
   const array = new Uint8Array(length)
