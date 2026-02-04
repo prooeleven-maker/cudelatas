@@ -1,12 +1,15 @@
 /**
  * Edge-safe cryptography utilities
- * Compatible with:
+ * Works on:
  * - Cloudflare Pages / Workers
  * - Next.js 14 (Edge runtime)
- * - Browsers
  *
- * ❌ Does NOT use Node.js crypto
+ * IMPORTANT:
+ * - Do NOT access `crypto` directly
+ * - Always use `globalThis.crypto`
  */
+
+const webCrypto = globalThis.crypto as Crypto
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
@@ -30,34 +33,29 @@ export function generateLicenseKey(): string {
 
 /**
  * SHA-256 hash using Web Crypto API
- * Used for secure license storage / comparison
  */
 export async function hashValue(value: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(value)
 
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashBuffer = await webCrypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
 
-  return hashArray
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('')
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 /**
  * Cryptographically secure random token
- * Used for sessions, refresh tokens, antifraud IDs
  */
 export function generateSecureToken(bytes = 32): string {
   const buffer = new Uint8Array(bytes)
-  crypto.getRandomValues(buffer)
+  webCrypto.getRandomValues(buffer)
 
   return Array.from(buffer, b => b.toString(16).padStart(2, '0')).join('')
 }
 
 /**
  * Constant-time string comparison
- * Prevents timing attacks
  */
 export function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false
