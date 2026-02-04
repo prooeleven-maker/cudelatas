@@ -6,21 +6,22 @@ export const runtime = 'edge'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { key, hash } = body
 
-    if (!key || !hash) {
+    const { licenseKey, expectedHash } = body
+
+    if (!licenseKey || !expectedHash) {
       return NextResponse.json(
-        { error: 'invalid_payload' },
+        { valid: false },
         { status: 400 }
       )
     }
 
-    const valid = await verifyHash(key, hash)
+    const valid = await verifyHash(licenseKey, expectedHash)
 
     return NextResponse.json({ valid })
   } catch {
     return NextResponse.json(
-      { error: 'server_error' },
+      { valid: false },
       { status: 500 }
     )
   }
