@@ -75,9 +75,14 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: 'url(' + wallpaper.src + ')' }}
+      />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-slate-900/60" />
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      <nav className="bg-white/90 backdrop-blur shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
@@ -121,7 +126,11 @@ export default function AdminLayout({
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
+        <div className="rounded-2xl bg-white/90 backdrop-blur shadow-md ring-1 ring-white/40">
+          <div className="p-6">
+            {children}
+          </div>
+        </div>
       </main>
     </div>
   )
