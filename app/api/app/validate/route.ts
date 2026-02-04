@@ -1,82 +1,44 @@
-export const runtime = 'edge'
+/**
+ * Cloudflare / Edge compatible crypto helpers
+ * NÃO usa Node.js crypto
+ */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdmin } from '@/lib/supabase'
-import { sha256 } from '@/lib/crypto'
+/**
+ * Generate a random license key
+ * Format: XXXX-XXXX-XXXX-XXXX
+ */
+export function generateLicenseKey(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const block = () =>
+    Array.from({ length: 4 }, () =>
+      chars[Math.floor(Math.random() * chars.length)]
+    ).join('')
 
-export async function POST(req: NextRequest) {
-  try {
-    const supabase = getSupabaseAdmin()
-    if (!supabase) {
-      return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
-    }
-
-    const { key, hwid, version, platform, ip } = await req.json()
-
-    if (!key || !hwid) {
-      return NextResponse.json({ valid: false, error: 'Missing data' }, { status: 400 })
-    }
-
-    const keyHash = await sha256(key)
-
-    // 🔒 BAN CHECK
-    const { data: banned } = await supabase.rpc('is_banned', {
-      p_hwid: hwid,
-      p_ip: ip ?? null,
-    })
-
-    if (banned) {
-      return NextResponse.json({ valid: false, error: 'BANNED' })
-    }
-
-    // 🔑 LICENSE CHECK
-    const { data: license } = await supabase
-      .from('license_keys')
-      .select('*')
-      .eq('key_hash', keyHash)
-      .maybeSingle()
-
-    if (!license || !license.is_active) {
-      return NextResponse.json({ valid: false, error: 'INVALID_KEY' })
-    }
-
-    if (license.expires_at && new Date(license.expires_at) <= new Date()) {
-      return NextResponse.json({ valid: false, error: 'EXPIRED' })
-    }
-
-    // 🔄 VERSION CONTROL
-    const { data: appVersion } = await supabase
-      .from('app_versions')
-      .select('*')
-      .eq('platform', platform)
-      .maybeSingle()
-
-    if (appVersion && version < appVersion.min_version) {
-      return NextResponse.json({
-        valid: false,
-        error: 'UPDATE_REQUIRED',
-        latest: appVersion.latest_version,
-      })
-    }
-
-    // 📊 LOG
-    await supabase.from('security_logs').insert({
-      license_id: license.id,
-      hwid,
-      ip,
-      action: 'validate',
-    })
-
-    return NextResponse.json({
-      valid: true,
-      plan: license.plan,
-      expires_at: license.expires_at,
-    })
-  } catch {
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
-  }
+  return `${block()}-${block()}-${block()}-${block()}`
 }
 
-export function GET() {
-  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+/**
+ * Hash a value using SHA-256 (Web Crypto API)
+ * Works on Cloudflare, Edge, Browsers
+ */
+export async function hashValue(value: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(value)
+
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/**
+ * Compare raw value with a stored hash
+ */
+export async function compareHash(
+  value: string,
+  hash: string
+): Promise<boolean> {
+  const valueHash = await hashValue(value)
+  return valueHash === hash
 }
