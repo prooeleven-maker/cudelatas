@@ -1,69 +1,71 @@
 /**
- * Edge-safe cryptography utilities
- * Works on:
- * - Cloudflare Pages / Workers
- * - Next.js 14 (Edge runtime)
- *
- * IMPORTANT:
- * - Do NOT access `crypto` directly
- * - Always use `globalThis.crypto`
+ * Cloudflare / Edge compatible crypto helpers
+ * - NO Node.js crypto
+ * - Uses Web Crypto API
  */
 
-const webCrypto = globalThis.crypto as Crypto
+/* =======================
+   LICENSE KEY GENERATION
+   ======================= */
 
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-
-/**
- * Generates a human-readable license key
- * Example: X7Q9-2MKA-R8W4-JF9P
- */
 export function generateLicenseKey(): string {
-  const parts: string[] = []
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
-  for (let i = 0; i < 4; i++) {
-    let part = ''
-    for (let j = 0; j < 4; j++) {
-      part += ALPHABET[Math.floor(Math.random() * ALPHABET.length)]
-    }
-    parts.push(part)
-  }
+  const block = () =>
+    Array.from({ length: 4 }, () =>
+      chars[Math.floor(Math.random() * chars.length)]
+    ).join('')
 
-  return parts.join('-')
+  // FORTE-XXXX-XXXX-XXXX
+  return `FORTE-${block()}-${block()}-${block()}`
 }
 
-/**
- * SHA-256 hash using Web Crypto API
- */
-export async function hashValue(value: string): Promise<string> {
+/* =======================
+   HASHING (SHA-256)
+   ======================= */
+
+export async function hashLicenseKey(value: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(value)
 
-  const hashBuffer = await webCrypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
 
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return bufferToHex(hashBuffer)
 }
 
-/**
- * Cryptographically secure random token
- */
-export function generateSecureToken(bytes = 32): string {
-  const buffer = new Uint8Array(bytes)
-  webCrypto.getRandomValues(buffer)
+/* =======================
+   VERIFY HASH
+   ======================= */
 
-  return Array.from(buffer, b => b.toString(16).padStart(2, '0')).join('')
+export async function verifyHash(
+  value: string,
+  expectedHash: string
+): Promise<boolean> {
+  const hash = await hashLicenseKey(value)
+  return timingSafeEqual(hash, expectedHash)
+}
+
+/* =======================
+   HELPERS
+   ======================= */
+
+function bufferToHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
 /**
  * Constant-time string comparison
+ * (prevents timing attacks)
  */
-export function safeEqual(a: string, b: string): boolean {
+function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false
 
-  let diff = 0
+  let result = 0
   for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
   }
 
-  return diff === 0
+  return result === 0
 }
