@@ -1,40 +1,25 @@
-import crypto from 'crypto'
-
 /**
- * Generate a random license key
- * Format: FORTE-XXXX-XXXX-XXXX where X is alphanumeric
+ * Cloudflare / Edge compatible crypto helpers
+ * NÃO usa Node.js crypto
  */
-export function generateLicenseKey(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  const segments = 3
-  const segmentLength = 4
 
-  const segmentsArray = []
-  for (let i = 0; i < segments; i++) {
-    let segment = ''
-    for (let j = 0; j < segmentLength; j++) {
-      segment += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    segmentsArray.push(segment)
-  }
+export async function sha256(value: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(value)
 
-  return 'FORTE-' + segmentsArray.join('-')
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+
+  return hashArray
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
 /**
- * Hash a license key using SHA-256
+ * Gera um token aleatório seguro (Edge)
  */
-export function hashLicenseKey(key: string): string {
-  return crypto.createHash('sha256').update(key).digest('hex')
-}
-
-/**
- * Verify if a provided key matches a stored hash
- */
-export function verifyLicenseKey(key: string, hash: string): boolean {
-  const keyHash = hashLicenseKey(key)
-  return crypto.timingSafeEqual(
-    Buffer.from(keyHash, 'hex'),
-    Buffer.from(hash, 'hex')
-  )
+export function randomToken(length = 32): string {
+  const array = new Uint8Array(length)
+  crypto.getRandomValues(array)
+  return Array.from(array, b => b.toString(16).padStart(2, '0')).join('')
 }
