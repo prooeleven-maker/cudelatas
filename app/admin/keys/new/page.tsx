@@ -20,16 +20,16 @@ export default function NewKeyPage() {
     try {
       const formData = new FormData(event.currentTarget)
       const expiresAt = formData.get('expires_at') as string | null
-      const supabaseAdmin = getSupabaseAdmin()
+      const supabase = getClientSupabase()
 
-      if (!supabaseAdmin) {
-        throw new Error('Erro ao conectar ao Supabase Admin')
+      if (!supabase) {
+        throw new Error('Erro ao conectar ao Supabase')
       }
 
       const licenseKey = generateLicenseKey()
       const keyHash = await sha256(licenseKey)
 
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('license_keys')
         .insert({
           key_hash: keyHash,
