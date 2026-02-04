@@ -1,44 +1,27 @@
-/**
- * Cloudflare / Edge compatible crypto helpers
- * NÃO usa Node.js crypto
- */
+import { NextResponse } from 'next/server'
+import { verifyHash } from '@/lib/crypto'
 
-/**
- * Generate a random license key
- * Format: XXXX-XXXX-XXXX-XXXX
- */
-export function generateLicenseKey(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  const block = () =>
-    Array.from({ length: 4 }, () =>
-      chars[Math.floor(Math.random() * chars.length)]
-    ).join('')
+export const runtime = 'edge'
 
-  return `${block()}-${block()}-${block()}-${block()}`
-}
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const { key, hash } = body
 
-/**
- * Hash a value using SHA-256 (Web Crypto API)
- * Works on Cloudflare, Edge, Browsers
- */
-export async function hashValue(value: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(value)
+    if (!key || !hash) {
+      return NextResponse.json(
+        { error: 'invalid_payload' },
+        { status: 400 }
+      )
+    }
 
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const valid = await verifyHash(key, hash)
 
-  return Array.from(new Uint8Array(hashBuffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-/**
- * Compare raw value with a stored hash
- */
-export async function compareHash(
-  value: string,
-  hash: string
-): Promise<boolean> {
-  const valueHash = await hashValue(value)
-  return valueHash === hash
+    return NextResponse.json({ valid })
+  } catch {
+    return NextResponse.json(
+      { error: 'server_error' },
+      { status: 500 }
+    )
+  }
 }
