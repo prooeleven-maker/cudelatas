@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getClientSupabase } from '@/lib/supabase'
 import Link from 'next/link'
+import wallpaper from '../../wallpaper_2.png'
 
 export default function AdminLayout({
   children,
