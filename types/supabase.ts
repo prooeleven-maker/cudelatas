@@ -17,6 +17,7 @@ export type Database = {
           created_at: string
           expires_at: string | null
           last_used_at: string | null
+          last_ip: string | null
           created_by: string | null
           username: string | null
           password_hash: string | null
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           last_used_at?: string | null
+          last_ip?: string | null
           created_by?: string | null
           username?: string | null
           password_hash?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           last_used_at?: string | null
+          last_ip?: string | null
           created_by?: string | null
           username?: string | null
           password_hash?: string | null
@@ -58,6 +61,129 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
+      }
+      admin_sessions: {
+        Row: {
+          id: string
+          token: string
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          token: string
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          token?: string
+          expires_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      releases: {
+        Row: {
+          id: string
+          channel: string
+          version: string
+          notes: string | null
+          file_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          channel: string
+          version: string
+          notes?: string | null
+          file_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          channel?: string
+          version?: string
+          notes?: string | null
+          file_url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      banned_hwids: {
+        Row: {
+          id: string
+          hwid: string
+          reason: string | null
+          expires_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          hwid: string
+          reason?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          hwid?: string
+          reason?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      banned_ips: {
+        Row: {
+          id: string
+          ip: string
+          reason: string | null
+          expires_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ip: string
+          reason?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ip?: string
+          reason?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      ban_audit: {
+        Row: {
+          id: string
+          type: string
+          value: string
+          reason: string | null
+          admin: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          type: string
+          value: string
+          reason?: string | null
+          admin?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          type?: string
+          value?: string
+          reason?: string | null
+          admin?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
