@@ -24,7 +24,7 @@ export function generateLicenseKey(): string {
   }
 
   // FORTE-XXXX-XXXX-XXXX
-  return `FORTE-${block()}-${block()}-${block()}`
+  return `TROIAN-${block()}-${block()}-${block()}`
 }
 
 /* =======================
@@ -60,9 +60,12 @@ export async function verifyHash(
    ======================= */
 
 function bufferToHex(buffer: ArrayBuffer): string {
-  return [...new Uint8Array(buffer)]
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
+  const bytes = new Uint8Array(buffer)
+  let hex = ''
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, '0')
+  }
+  return hex
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
