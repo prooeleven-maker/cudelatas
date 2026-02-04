@@ -17,7 +17,7 @@ export default function LicenseKeysPage() {
   const [keys, setKeys] = useState<LicenseKey[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'expired'>('all')
-  // Using global supabase client
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     fetchKeys()
@@ -26,8 +26,10 @@ export default function LicenseKeysPage() {
   const fetchKeys = async () => {
     setIsLoading(true)
     try {
-      const supabase = getClientSupabase();
-      if (!supabase) return;
+      const supabase = getClientSupabase()
+      if (!supabase) {
+        throw new Error('Supabase client não configurado. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      }
       let query = supabase
         .from('license_keys')
         .select('*')
@@ -50,8 +52,10 @@ export default function LicenseKeysPage() {
       }
 
       setKeys(filteredData)
+      setErrorMessage('')
     } catch (error) {
       console.error('Error fetching keys:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar chaves')
     } finally {
       setIsLoading(false)
     }
@@ -59,8 +63,11 @@ export default function LicenseKeysPage() {
 
   const toggleKeyStatus = async (keyId: string, currentStatus: boolean) => {
     try {
-      const supabase = getClientSupabase();
-      if (!supabase) return;
+      const supabase = getClientSupabase()
+      if (!supabase) {
+        setErrorMessage('Supabase client não configurado. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+        return
+      }
       const { error } = await supabase
         .from('license_keys')
         .update({ is_active: !currentStatus })
@@ -68,9 +75,10 @@ export default function LicenseKeysPage() {
 
       if (error) throw error
 
-      fetchKeys() // Refresh the list
+      fetchKeys()
     } catch (error) {
       console.error('Error updating key status:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao atualizar status')
     }
   }
 
@@ -80,8 +88,11 @@ export default function LicenseKeysPage() {
     }
 
     try {
-      const supabase = getClientSupabase();
-      if (!supabase) return;
+      const supabase = getClientSupabase()
+      if (!supabase) {
+        setErrorMessage('Supabase client não configurado. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+        return
+      }
       const { error } = await supabase
         .from('license_keys')
         .delete()
@@ -89,9 +100,10 @@ export default function LicenseKeysPage() {
 
       if (error) throw error
 
-      fetchKeys() // Refresh the list
+      fetchKeys()
     } catch (error) {
       console.error('Error deleting key:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao deletar chave')
     }
   }
 
@@ -128,7 +140,12 @@ export default function LicenseKeysPage() {
         </Link>
       </div>
 
-      {/* Filters */}
+      {errorMessage && (
+        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
+
       <div className="mb-6">
         <div className="sm:hidden">
           <label htmlFor="filter" className="sr-only">Filter</label>
