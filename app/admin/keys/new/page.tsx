@@ -7,8 +7,8 @@ import { generateLicenseKey, sha256 } from '@/lib/crypto'
 async function createKey(formData: FormData) {
   'use server'
 
-  const supabase = getSupabaseAdmin()
-  if (!supabase) {
+  const supabaseAdmin = getSupabaseAdmin()
+  if (!supabaseAdmin) {
     throw new Error('Erro ao conectar ao Supabase')
   }
 
@@ -17,7 +17,7 @@ async function createKey(formData: FormData) {
   const licenseKey = generateLicenseKey()
   const keyHash = await sha256(licenseKey)
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('license_keys')
     .insert({
       key_hash: keyHash,
