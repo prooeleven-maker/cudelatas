@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   })
   const [recentKeys, setRecentKeys] = useState<LicenseKey[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  // Using global supabase client
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     fetchStats()
@@ -31,8 +31,10 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const supabase = getClientSupabase();
-      if (!supabase) return;
+      const supabase = getClientSupabase()
+      if (!supabase) {
+        throw new Error('Supabase client não configurado. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      }
       const { data, error } = await supabase
         .from('license_keys')
         .select('*')
@@ -46,15 +48,19 @@ export default function AdminDashboard() {
       const expired = data.filter(key => key.expires_at && new Date(key.expires_at) <= now).length
 
       setStats({ total, active, inactive, expired })
+      setErrorMessage('')
     } catch (error) {
       console.error('Error fetching stats:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar estatísticas')
     }
   }
 
   const fetchRecentKeys = async () => {
     try {
-      const supabase = getClientSupabase();
-      if (!supabase) return;
+      const supabase = getClientSupabase()
+      if (!supabase) {
+        throw new Error('Supabase client não configurado. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+      }
       const { data, error } = await supabase
         .from('license_keys')
         .select('*')
@@ -64,8 +70,10 @@ export default function AdminDashboard() {
       if (error) throw error
 
       setRecentKeys(data)
+      setErrorMessage('')
     } catch (error) {
       console.error('Error fetching recent keys:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar chaves recentes')
     } finally {
       setIsLoading(false)
     }
@@ -87,6 +95,24 @@ export default function AdminDashboard() {
           Overview of your license key system
         </p>
       </div>
+
+      {errorMessage && (
+        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
