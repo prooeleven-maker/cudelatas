@@ -2,9 +2,9 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { generateLicenseKey, sha256 } from '@/lib/crypto'
 
 /* ===============================
-   SERVER ACTION (FORA DO COMPONENTE)
+   SERVER ACTION (SEM EXPORT)
    =============================== */
-export async function createKey(formData: FormData) {
+async function createKey(formData: FormData) {
   'use server'
 
   const supabase = getSupabaseAdmin()
