@@ -1,10 +1,10 @@
 /* =========================================
-   CRYPTO HELPERS — CLOUDFARE / EDGE SAFE
+   CRYPTO HELPERS — CLOUDFLARE / EDGE SAFE
    ========================================= */
 
 /**
  * Garantia de acesso ao Web Crypto
- * sem depender de lib.dom no TypeScript
+ * sem depender de Node.js
  */
 const webCrypto: Crypto = (globalThis as any).crypto
 
@@ -36,11 +36,10 @@ export async function hashLicenseKey(value: string): Promise<string> {
     throw new Error('Web Crypto API not available')
   }
 
-  const encoder = new (globalThis as any).TextEncoder()
+  const encoder = new TextEncoder()
   const data = encoder.encode(value)
 
   const hashBuffer = await webCrypto.subtle.digest('SHA-256', data)
-
   return bufferToHex(hashBuffer)
 }
 
@@ -61,19 +60,11 @@ export async function verifyHash(
    ======================= */
 
 function bufferToHex(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
-  let hex = ''
-
-  for (let i = 0; i < bytes.length; i++) {
-    hex += bytes[i].toString(16).padStart(2, '0')
-  }
-
-  return hex
+  return [...new Uint8Array(buffer)]
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
-/**
- * Constant-time comparison
- */
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false
 
@@ -84,3 +75,10 @@ function timingSafeEqual(a: string, b: string): boolean {
 
   return diff === 0
 }
+
+/* =======================
+   BACKWARD COMPATIBILITY
+   ======================= */
+
+// usado por login/register antigos
+export const sha256 = hashLicenseKey
