@@ -17,8 +17,10 @@ export default function NewKeyPage() {
     setGeneratedKey('')
     setIsSubmitting(true)
 
+    const form = event.currentTarget
+
     try {
-      const formData = new FormData(event.currentTarget)
+      const formData = new FormData(form)
       const expiresAt = formData.get('expires_at') as string | null
       const supabase = getClientSupabase()
 
@@ -43,7 +45,7 @@ export default function NewKeyPage() {
       }
 
       setGeneratedKey(licenseKey)
-      event.currentTarget.reset()
+      form.reset()
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Falha ao gerar license')
     } finally {
